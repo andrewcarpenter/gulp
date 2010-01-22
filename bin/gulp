@@ -1,24 +1,36 @@
 #!/usr/bin/env ruby
+
+# TODO: remove this
+$LOAD_PATH.unshift(File.expand_path(File.dirname(__FILE__)) + '/../lib')
+
+# TODO: remove this
+I_KNOW_I_AM_USING_AN_OLD_AND_BUGGY_VERSION_OF_LIBXML2 = 1
+
 require 'rubygems'
 require 'trollop'
 require 'gulp'
 
 interrupted = false
-trap("INT") { interrupted = true }
+trap("INT") do
+  puts "waiting so can exit cleanly..."
+  interrupted = true
+end
 
 opts = Trollop::options do
-  opt :database_directory, "Database directory", :type => String, :required => true
+  opt :database_directory, "Database directory", :type => String
+  opt :file, "File", :type => String, :required => true
   opt :quiet, "Use minimal output", :short => 'q'
 end
 
 puts opts.inspect
 gulp = Gulp.new(:database_directory => opts[:database_directory] || '.')
 
+files_to_process = [opts[:file]]
 files_to_process.each do |file|
   gulp.add_xml_file_to_corpus(file)
   
   if interrupted
-    puts "exiting cleanly"
+    puts "exited cleanly."
     exit
   end
 end

@@ -6,7 +6,7 @@ This is pre-alpha.
 
 ## Install
 
-  gem install gulp
+    [sudo] gem install gulp
 
 ## Usage
 

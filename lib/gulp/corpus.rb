@@ -1,9 +1,12 @@
 class Gulp
   class Corpus
+    include TokyoCabinet
+    
     def initialize(database_directory)
       @database_directory = database_directory
       @processed_documents = HDB::new
       @processed_documents.open("#{@database_directory}/processed_documents.hdb", HDB::OWRITER | HDB::OCREAT)
+      @phrase_document_counts = HDB::new
       @phrase_document_counts.open("#{@database_directory}/phase_document_counts.hdb", HDB::OWRITER | HDB::OCREAT)
     end
     

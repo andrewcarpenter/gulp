@@ -1,5 +1,5 @@
 require 'nokogiri'
-require 'activesupport'
+require 'active_support'
 require 'tokyocabinet'
 
 class Gulp
@@ -15,8 +15,11 @@ class Gulp
   end
   
   def add_xml_file_to_corpus(path)
-    Gulp::Document.new_from_xml(path, @corpus)
+    Gulp::Document.new_from_xml_file(path, @corpus)
   end
 end
 
-require "gulp/phrase_extractor"
+require "gulp/corpus"
+require "gulp/document"
+require "gulp/phrase"
+

@@ -15,10 +15,15 @@ class Gulp
     def self.new_from_xml_file(path, corpus)
       obj = new(path, corpus)
       extractor = XMLTextExtractor.new(self)
-      Nokogiri::XML::SAX::Parser.new(extractor).parse(input)
+      Nokogiri::XML::SAX::Parser.new(extractor).parse(path)
     end
-  
+    
+    def finalized?
+      @finalized
+    end
+    
     def add_text(text)
+      raise "cannot add text once finalized" if finalized?
       strings = chunk_text(preprocess_text(text))
     
       strings.each do |string|
@@ -73,7 +78,7 @@ class Gulp
   
   class XMLTextExtractor < Nokogiri::XML::SAX::Document
     def initialize(phrase_extractor)
-      super
+      super()
       @phrase_extractor = phrase_extractor
     end
 
