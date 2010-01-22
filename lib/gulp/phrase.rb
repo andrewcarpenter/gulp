@@ -3,7 +3,7 @@ class Gulp
     attr_accessor :document, :string, :count
     def initialize(document, string, count)
       @document = document
-      @string = phrase
+      @string = string
       @count = count
     end
     

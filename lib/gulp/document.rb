@@ -2,30 +2,50 @@ class Gulp
   class Document
     ALLOWED_PHRASE_LENGTHS = [2,3,4]
     STOPWORDS = %w(a an and except from has in into is made of one that the these this to with)
-    attr_reader :word_count, :phrase_counts
+    attr_reader :name, :corpus, :word_count, :phrase_counts
   
     def initialize(name, corpus)
       @name = name
       @corpus = corpus
       @word_count = 0
       @finalized = false
-      @phrase_counts = Hash.new(0)
+      @phrase_counts = {}#Gulp::DataStore.new('document')
+      # @phrase_counts.clear!
     end
   
     def self.new_from_xml_file(path, corpus)
-      obj = new(path, corpus)
+      obj = Gulp::Document.new(path, corpus)
+    end
+    
+    def extract_phrases!
       extractor = XMLTextExtractor.new(self)
-      Nokogiri::XML::SAX::Parser.new(extractor).parse(path)
+      Nokogiri::XML::SAX::Parser.new(extractor).parse(File.open(@name))
+      self
+    end
+    
+    def already_processed?
+      @corpus.already_processed?(name)
     end
     
     def finalized?
       @finalized
     end
     
+    def add_to_corpus!
+      unless already_processed?
+        @finalized = true
+        @phrase_counts.each_key do |phrase|
+          @corpus.increment_phrase_document_count(phrase)
+        end
+    
+        @corpus.mark_as_processed!(name)
+      end
+    end
+    
     def add_text(text)
       raise "cannot add text once finalized" if finalized?
       strings = chunk_text(preprocess_text(text))
-    
+      
       strings.each do |string|
         words = string.split(/\s+/)
         next if words.size == 0
@@ -40,6 +60,9 @@ class Gulp
             next if STOPWORDS.include?(sub_phrase_words.first.downcase) || STOPWORDS.include?(sub_phrase_words.last.downcase)
           
             sub_phrase = sub_phrase_words.join(' ')
+            # warn "\t\tadding #{sub_phrase}"
+            # @phrase_counts.increment(sub_phrase)
+            @phrase_counts[sub_phrase] ||= 0
             @phrase_counts[sub_phrase] += 1
           end
         end
@@ -54,23 +77,20 @@ class Gulp
   
       # remove funky chars
       text.gsub!(/[^ a-zA-Z0-9-]/,'')
+      
+      text
     end
   
     def chunk_text(text)
       text.split(/\.|,|:|;/).compact.map{|s| s.gsub(/^\s+|\s+$/,'').gsub(/\s+/, ' ')}.reject{|s| s =~ /^\s*$/}
     end
     
-    def finalize!
-      @finalized = true
-      @phrase_counts.keys.each do |phrase|
-        @corpus.increment_phrase(phrase)
-      end
-      
-      @corpus.mark_as_processed!(name)
+    def number_of_unique_phrases
+      phrase_counts.size
     end
     
     def phrases
-      phrase_counts.map do |phase, count|
+      phrase_counts.map do |phrase, count|
         Phrase.new(self, phrase, count)
       end
     end

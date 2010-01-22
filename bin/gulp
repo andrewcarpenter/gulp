@@ -13,24 +13,82 @@ require 'gulp'
 interrupted = false
 trap("INT") do
   puts "waiting so can exit cleanly..."
-  interrupted = true
+  @interrupted = true
 end
 
-opts = Trollop::options do
-  opt :database_directory, "Database directory", :type => String
-  opt :file, "File", :type => String, :required => true
-  opt :quiet, "Use minimal output", :short => 'q'
-end
-
-puts opts.inspect
-gulp = Gulp.new(:database_directory => opts[:database_directory] || '.')
-
-files_to_process = [opts[:file]]
-files_to_process.each do |file|
-  gulp.add_xml_file_to_corpus(file)
-  
-  if interrupted
+def okay_to_terminate!
+  if @interrupted
     puts "exited cleanly."
     exit
+  end
+end
+
+SUB_COMMANDS = %w(add sip corpus_dump)
+global_opts = Trollop::options do
+  banner "statistically improbable phrase extractor"
+  opt :database_directory, "Database directory", :type => String
+  opt :quiet, "Quiet", :short => :q
+  stop_on SUB_COMMANDS
+end
+
+cmd = ARGV.shift # get the subcommand
+cmd_opts = case cmd
+  when "add"
+    Trollop::options do
+      opt :file, "File", :type => String
+    end
+  when "sip"
+    Trollop::options do
+      opt :file, "File", :type => String, :required => true
+    end
+  when "corpus_dump"
+  else
+    Trollop::die "unknown subcommand #{cmd.inspect}"
+  end
+
+gulp = Gulp.new(:database_directory => global_opts[:database_directory] || '.')
+
+case cmd
+when "add"
+  if cmd_opts[:file]
+    files = [cmd_opts[:file]]
+  else
+    files = STDIN.read.split("\n")
+  end
+  
+  files.each do |path|
+    puts "processing #{path}..."
+    doc = gulp.new_from_xml_file(path)
+    if doc.already_processed?
+      puts "\talready processed."
+    else
+      doc.extract_phrases!
+      doc.add_to_corpus!
+      puts "doc has #{doc.number_of_unique_phrases} unique phrases" unless global_opts[:quiet]
+      
+      if doc.number_of_unique_phrases == 0
+        puts "no phrases?!?"
+        doc.phrase_counts.each do |p, c|
+          puts "#{p} => #{c}"
+        end
+      end
+      puts "corpus has #{gulp.corpus.number_of_unique_phrases} unique phrases" unless global_opts[:quiet]
+      puts "corpus has #{gulp.corpus.total_number_of_documents} unique documents" unless global_opts[:quiet]
+    end
+    okay_to_terminate!
+  end
+when "sip"
+  doc = gulp.new_from_xml_file(cmd_opts[:file])
+  doc.extract_phrases!
+  phrases = doc.phrases
+  
+  phrases.sort_by{|p| p.inverse_document_frequency}.each do |phrase|
+    puts "#{phrase.string} => #{phrase.inverse_document_frequency}"
+    okay_to_terminate!
+  end
+when "corpus_dump"
+  gulp.corpus.phrase_document_counts.map do |phrase, count|
+    puts "#{phrase} => #{count}"
+    okay_to_terminate!
   end
 end
