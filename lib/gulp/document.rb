@@ -8,11 +8,12 @@ class Gulp
       @name = name
       @corpus = corpus
       @word_count = 0
+      @finalized = false
       @phrase_counts = Hash.new(0)
     end
   
-    def self.new_from_xml_file(path)
-      obj = new
+    def self.new_from_xml_file(path, corpus)
+      obj = new(path, corpus)
       extractor = XMLTextExtractor.new(self)
       Nokogiri::XML::SAX::Parser.new(extractor).parse(input)
     end
@@ -34,7 +35,7 @@ class Gulp
             next if STOPWORDS.include?(sub_phrase_words.first.downcase) || STOPWORDS.include?(sub_phrase_words.last.downcase)
           
             sub_phrase = sub_phrase_words.join(' ')
-            phrase_counts[sub_phrase] += 1
+            @phrase_counts[sub_phrase] += 1
           end
         end
       end
@@ -52,6 +53,21 @@ class Gulp
   
     def chunk_text(text)
       text.split(/\.|,|:|;/).compact.map{|s| s.gsub(/^\s+|\s+$/,'').gsub(/\s+/, ' ')}.reject{|s| s =~ /^\s*$/}
+    end
+    
+    def finalize!
+      @finalized = true
+      @phrase_counts.keys.each do |phrase|
+        @corpus.increment_phrase(phrase)
+      end
+      
+      @corpus.mark_as_processed!(name)
+    end
+    
+    def phrases
+      phrase_counts.map do |phase, count|
+        Phrase.new(self, phrase, count)
+      end
     end
   end
   
