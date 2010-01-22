@@ -1,0 +1,15 @@
+#!/usr/bin/env ruby
+require 'trollop'
+require 'gulp'
+
+interrupted = false
+trap("INT") { interrupted = true }
+
+opts = Trollop::options do
+  opt :quiet, "Use minimal output", :short => 'q'
+  opt :database_directory, "Database directory", :type => String
+end
+
+gulp = Gulp.new(:database_directory => opts[:database_directory] || '.')
+
+gulp.add_xml_file_to_corpus('/path/to/file/1')
