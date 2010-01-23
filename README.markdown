@@ -2,7 +2,7 @@
 
 Ruby gem for identifying Statistically Improbable Phrases across a large document set.
 
-This is pre-alpha.
+This is pre-alpha; use at your own risk.  API will change.
 
 ## Install
 
