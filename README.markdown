@@ -18,6 +18,6 @@ This is pre-alpha.
     
     gulp.sips_for('/path/to/file/3') # => [<Gulp::Phrase>, <Gulp::Phrase>]
 
-## License
+## Copyright
 
-MIT
+Copyright (c) 2010 Andrew Carpenter. See LICENSE for details.
