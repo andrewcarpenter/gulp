@@ -39,6 +39,7 @@ class Gulp
     def add_text(text)
       raise "cannot add text once finalized" if finalized?
       word_count, phrases = @extractor.extract(text)
+      @word_count += word_count
       
       phrases.each do |phrase|
         @phrase_counts[phrase] ||= 0
