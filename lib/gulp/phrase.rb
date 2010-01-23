@@ -8,7 +8,7 @@ class Gulp
     end
     
     def words
-      words = phrase.split(/ /)
+      words = string.split(/ /)
     end
     
     def phrase_size
@@ -16,7 +16,7 @@ class Gulp
     end
     
     def term_frequency
-      (count * phrase_size) / document.total_word_count.to_f
+      (count * phrase_size) / document.word_count.to_f
     end
     
     def number_of_documents_with_term
@@ -25,6 +25,10 @@ class Gulp
     
     def inverse_document_frequency
       Math.log(document.corpus.total_number_of_documents / (1+number_of_documents_with_term))
+    end
+    
+    def score
+      term_frequency * inverse_document_frequency
     end
   end
 end

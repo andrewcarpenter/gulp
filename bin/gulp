@@ -82,8 +82,8 @@ when "sip"
   doc.process!
   phrases = doc.phrases
   
-  phrases.sort_by{|p| p.inverse_document_frequency}.each do |phrase|
-    puts "#{phrase.string} => #{phrase.inverse_document_frequency}"
+  phrases.sort_by{|p| p.score}.each do |phrase|
+    puts "#{phrase.string} (#{phrase.count})=> #{phrase.score}"
     okay_to_terminate!
   end
 when "corpus_dump"
