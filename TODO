@@ -1,1 +1,3 @@
-* Moneta
+* Port to mongo
+* Use data store for individual document's phrase_counts
+* gemify
