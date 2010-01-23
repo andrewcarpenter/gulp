@@ -12,11 +12,13 @@ This is pre-alpha.
 
     gulp = Gulp.new(:database_directory => '/path/to/dir')
     
-    gulp.add_xml_file_to_corpus('/path/to/file/1')
-    gulp.add_xml_file_to_corpus('/path/to/file/2')
-    gulp.add_xml_file_to_corpus('/path/to/file/3')
+    gulp.new_from_xml_file(path_1).process!
+    gulp.new_from_xml_file(path_2).process!
+    gulp.new_from_xml_file(path_3).process!
     
-    gulp.sips_for('/path/to/file/3') # => [<Gulp::Phrase>, <Gulp::Phrase>]
+    doc = gulp.new_from_xml_file(path_4).process!
+    doc.process!
+    doc.phrases # => [<Gulp::Phrase>, <Gulp::Phrase>]
 
 ## Copyright
 
