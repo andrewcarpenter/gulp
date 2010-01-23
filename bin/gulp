@@ -62,7 +62,7 @@ when "add"
     if doc.already_processed?
       puts "\talready processed."
     else
-      doc.extract_phrases!
+      doc.process!
       doc.add_to_corpus!
       puts "doc has #{doc.number_of_unique_phrases} unique phrases" unless global_opts[:quiet]
       
@@ -79,7 +79,7 @@ when "add"
   end
 when "sip"
   doc = gulp.new_from_xml_file(cmd_opts[:file])
-  doc.extract_phrases!
+  doc.process!
   phrases = doc.phrases
   
   phrases.sort_by{|p| p.inverse_document_frequency}.each do |phrase|

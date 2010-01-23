@@ -11,7 +11,7 @@ class Gulp
   end
   
   def new_from_xml_file(path)
-    Gulp::Document.new_from_xml_file(path, @corpus)
+    Gulp::Document.new(path, @corpus)
   end
 end
 
@@ -19,4 +19,5 @@ require "gulp/corpus"
 require "gulp/data_store"
 require "gulp/document"
 require "gulp/phrase"
+require "gulp/phrase_extractor"
 

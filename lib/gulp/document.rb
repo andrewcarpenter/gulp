@@ -1,7 +1,5 @@
 class Gulp
   class Document
-    ALLOWED_PHRASE_LENGTHS = [2,3,4]
-    STOPWORDS = %w(a an and except from has in into is made of one that the these this to with)
     attr_reader :name, :corpus, :word_count, :phrase_counts
   
     def initialize(name, corpus)
@@ -10,16 +8,12 @@ class Gulp
       @word_count = 0
       @finalized = false
       @phrase_counts = {}#Gulp::DataStore.new('document')
-      # @phrase_counts.clear!
+      @extractor = Gulp::PhraseExtractor.new
     end
   
-    def self.new_from_xml_file(path, corpus)
-      obj = Gulp::Document.new(path, corpus)
-    end
-    
-    def extract_phrases!
+    def process!
       extractor = XMLTextExtractor.new(self)
-      Nokogiri::XML::SAX::Parser.new(extractor).parse(File.open(@name))
+      Nokogiri::XML::SAX::Parser.new(extractor).parse(File.open(name))
       self
     end
     
@@ -44,45 +38,12 @@ class Gulp
     
     def add_text(text)
       raise "cannot add text once finalized" if finalized?
-      strings = chunk_text(preprocess_text(text))
+      word_count, phrases = @extractor.extract(text)
       
-      strings.each do |string|
-        words = string.split(/\s+/)
-        next if words.size == 0
-      
-        @word_count += words.size
-      
-        ALLOWED_PHRASE_LENGTHS.each do |length|
-          final_start_position = words.size - length
-          (0..final_start_position).each do |start_position|
-            sub_phrase_words = words.slice(start_position, length)
-          
-            next if STOPWORDS.include?(sub_phrase_words.first.downcase) || STOPWORDS.include?(sub_phrase_words.last.downcase)
-          
-            sub_phrase = sub_phrase_words.join(' ')
-            # warn "\t\tadding #{sub_phrase}"
-            # @phrase_counts.increment(sub_phrase)
-            @phrase_counts[sub_phrase] ||= 0
-            @phrase_counts[sub_phrase] += 1
-          end
-        end
+      phrases.each do |phrase|
+        @phrase_counts[phrase] ||= 0
+        @phrase_counts[phrase] += 1
       end
-    end
-  
-    def preprocess_text(text)
-      # remove parentheticals
-      text.gsub!(/\(.+?\)/, ' ')
-      text.gsub!(/\[.+?\]/, ' ')
-      text.gsub!(/\{.+?\}/, ' ')
-  
-      # remove funky chars
-      text.gsub!(/[^ a-zA-Z0-9-]/,'')
-      
-      text
-    end
-  
-    def chunk_text(text)
-      text.split(/\.|,|:|;/).compact.map{|s| s.gsub(/^\s+|\s+$/,'').gsub(/\s+/, ' ')}.reject{|s| s =~ /^\s*$/}
     end
     
     def number_of_unique_phrases
