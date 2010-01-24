@@ -6,3 +6,4 @@ pkg
 doc
 tmp
 *.hdb
+gulp.gemspec
