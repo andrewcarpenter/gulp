@@ -42,4 +42,8 @@ class PhraseExtractorTest < Test::Unit::TestCase
   should "remove parentheticals first" do
     assert_equal ["y z"], phrases_for("y (alpha beta) z")
   end
+  
+  should "remove non-word characters" do 
+    assert_equal ["y z"], phrases_for("$y_ &z*")
+  end
 end

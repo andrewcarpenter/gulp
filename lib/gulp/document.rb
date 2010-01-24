@@ -1,71 +1,69 @@
-class Gulp
+module Gulp
   class Document
-    attr_reader :name, :corpus, :word_count, :phrase_counts
+    attr_reader :path, :corpus, :word_count, :phrases
   
-    def initialize(name, corpus)
-      @name = name
+    def initialize(corpus, attributes)
       @corpus = corpus
-      @word_count = 0
-      @finalized = false
-      @phrase_counts = {}#Gulp::DataStore.new('document')
-      @extractor = Gulp::PhraseExtractor.new
+      @path = attributes['path']
+      @word_count = attributes['word_count'] || 0
+      @phrases = attributes['phrases'] || {}
+      
+      @phrase_extractor = Gulp::PhraseExtractor.new
     end
-  
-    def process!
-      extractor = XMLTextExtractor.new(self)
-      Nokogiri::XML::SAX::Parser.new(extractor).parse(File.open(name))
-      self
+    
+    def self.new_from_file(corpus, path)
+      doc = new(corpus, {'path' => path})
+      
+      text_extractor = XMLTextExtractor.new(doc)
+      Nokogiri::XML::SAX::Parser.new(text_extractor).parse(File.open(path))
+      doc
     end
     
     def already_processed?
-      @corpus.already_processed?(name)
+      @corpus.already_processed?(path)
     end
     
-    def finalized?
-      @finalized
+    def save!
+      @corpus.documents.insert(self.to_mongo)
     end
     
-    def add_to_corpus!
-      unless already_processed?
-        @finalized = true
-        @phrase_counts.each_key do |phrase|
-          @corpus.increment_phrase_document_count(phrase)
-        end
-    
-        @corpus.mark_as_processed!(name)
-      end
+    def to_mongo
+      {
+        'path' => @path,
+        'word_count' => @word_count,
+        'phrases' => @phrases
+      }
     end
     
     def add_text(text)
-      raise "cannot add text once finalized" if finalized?
-      word_count, phrases = @extractor.extract(text)
+      word_count, phrases = @phrase_extractor.extract(text)
       @word_count += word_count
       
       phrases.each do |phrase|
-        @phrase_counts[phrase] ||= 0
-        @phrase_counts[phrase] += 1
+        @phrases[phrase] ||= {'count' => 0}
+        @phrases[phrase]['count'] += 1
       end
     end
     
     def number_of_unique_phrases
-      phrase_counts.size
+      phrases.size
     end
     
     def phrases
-      phrase_counts.map do |phrase, count|
+      phrases.map do |phrase, count|
         Phrase.new(self, phrase, count)
       end
     end
   end
   
   class XMLTextExtractor < Nokogiri::XML::SAX::Document
-    def initialize(phrase_extractor)
+    def initialize(document)
       super()
-      @phrase_extractor = phrase_extractor
+      @document = document
     end
 
     def characters(text)
-      @phrase_extractor.add_text(text)
+      @document.add_text(text)
     end
   end
 end

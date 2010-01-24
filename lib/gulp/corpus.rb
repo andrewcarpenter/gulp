@@ -1,35 +1,24 @@
-class Gulp
+module Gulp
   class Corpus
-    
-    attr_reader :phrase_document_counts
-    def initialize(database_directory)
-      @database_directory = database_directory
-      @processed_documents = Gulp::DataStore.new("#{@database_directory}/processed_documents")
-      @phrase_document_counts = Gulp::DataStore.new("#{@database_directory}/phrase_document_counts")
+    attr_reader :documents
+    def initialize()
+      @db = Mongo::Connection.new.db("gulp")
+      @documents = @db['documents']
+      @documents.create_index(:path, :unique => true)
     end
     
-    def mark_as_processed!(document_name)
-      @processed_documents.increment(document_name)
-    end
-    
-    def already_processed?(document_name)
-      @processed_documents.has_key?(document_name)
+    def find_or_build_document(path)
+      doc_attributes = @documents.find("path" => path).first
+      
+      if doc_attributes
+        Gulp::Document.new(self, doc_attributes)
+      else
+        Gulp::Document.new_from_file(self, path)
+      end
     end
     
     def total_number_of_documents
       @processed_documents.size
-    end
-    
-    def number_of_unique_phrases
-      @phrase_document_counts.size
-    end
-    
-    def increment_phrase_document_count(phrase)
-      @phrase_document_counts.increment(phrase)
-    end
-    
-    def phrase_document_count(phrase)
-      @phrase_document_counts[phrase]
     end
   end
 end

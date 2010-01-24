@@ -46,7 +46,7 @@ cmd_opts = case cmd
     Trollop::die "unknown subcommand #{cmd.inspect}"
   end
 
-gulp = Gulp.new(:database_directory => global_opts[:database_directory] || '.')
+corpus = Gulp::Corpus.new()
 
 case cmd
 when "add"
@@ -58,37 +58,18 @@ when "add"
   
   files.each do |path|
     puts "processing #{path}..."
-    doc = gulp.new_from_xml_file(path)
-    if doc.already_processed?
-      puts "\talready processed."
-    else
-      doc.process!
-      doc.add_to_corpus!
-      puts "doc has #{doc.number_of_unique_phrases} unique phrases" unless global_opts[:quiet]
-      
-      if doc.number_of_unique_phrases == 0
-        puts "no phrases?!?"
-        doc.phrase_counts.each do |p, c|
-          puts "#{p} => #{c}"
-        end
-      end
-      puts "corpus has #{gulp.corpus.number_of_unique_phrases} unique phrases" unless global_opts[:quiet]
-      puts "corpus has #{gulp.corpus.total_number_of_documents} unique documents" unless global_opts[:quiet]
-    end
+    
+    doc = corpus.find_or_build_document(path)
+    doc.save!
+    
     okay_to_terminate!
   end
 when "sip"
-  doc = gulp.new_from_xml_file(cmd_opts[:file])
-  doc.process!
-  phrases = doc.phrases
+  doc = corpus.find_or_build_document(path)
+  doc.calculate_sips!
   
-  phrases.sort_by{|p| p.score}.each do |phrase|
+  doc.phrases.each do |phrase|
     puts "#{phrase.string} (#{phrase.count})=> #{phrase.score}"
-    okay_to_terminate!
-  end
-when "corpus_dump"
-  gulp.corpus.phrase_document_counts.map do |phrase, count|
-    puts "#{phrase} => #{count}"
     okay_to_terminate!
   end
 end

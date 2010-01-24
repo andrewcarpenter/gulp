@@ -10,9 +10,9 @@ begin
     gem.homepage = "http://github.com/andrewcarpenter/gulp"
     gem.authors = ["Andrew Carpenter"]
     gem.add_dependency 'activesupport'
-    gem.add_dependency 'tokyocabinet'
     gem.add_dependency 'nokogiri'
     gem.add_dependency 'trollop'
+    gem.add_dependency 'mongo'
   end
   Jeweler::GemcutterTasks.new
 rescue LoadError

@@ -1,10 +1,10 @@
-class Gulp
+module Gulp
   class PhraseExtractor
     ALLOWED_PHRASE_LENGTHS = [2,3,4]
     STOPWORDS = %w(a an and except from has in into is made of one that the these this to with)
 
     def extract(text)
-      strings = chunk_text(preprocess_text(text))
+      strings = chunk_text(preprocess_text(text)).map{|s| postprocess_text(s)}.reject{|s| s.blank?}
       phrases = []
       word_count = 0
       strings.each do |string|
@@ -39,11 +39,13 @@ class Gulp
     
     def postprocess_text(text)
       text.gsub!(/[^ a-zA-Z0-9-]/,'')
+      text.gsub!(/^\s+|\s+$/,'')
+      text.gsub!(/\s+/, ' ')
       text
     end
     
     def chunk_text(text)
-      text.split(/\.|,|:|;|\|/).compact.map{|s| s.gsub(/^\s+|\s+$/,'').gsub(/\s+/, ' ')}.reject{|s| s =~ /^\s*$/}
+      text.split(/\.|,|:|;|\|/).compact
     end
   end
 end

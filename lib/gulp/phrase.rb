@@ -1,4 +1,4 @@
-class Gulp
+module Gulp
   class Phrase
     attr_accessor :document, :string, :count
     def initialize(document, string, count)
